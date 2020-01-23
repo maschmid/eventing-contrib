@@ -952,7 +952,7 @@ spec:
       serviceAccountName: kafka-ch-dispatcher
       containers:
         - name: dispatcher
-          image: docker.io/maschmid/channel_dispatcher-eb1cc5120339690149a3dfa71cd24152@sha256:e8b1f47f241eae0ec664b43df66bed758284e87f392408ceec2a0bc2b60d7f1b
+          image: docker.io/maschmid/channel_dispatcher-eb1cc5120339690149a3dfa71cd24152@sha256:3479c2a287d32568a707c84e3aa4945bcf3891635d09ac11f772482afe874c3b
           env:
             - name: CONFIG_LOGGING_NAME
               value: config-logging
