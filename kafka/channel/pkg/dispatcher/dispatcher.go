@@ -108,11 +108,20 @@ func (d *KafkaDispatcher) UpdateKafkaConsumers(config *multichannelfanout.Config
 		for _, subSpec := range cc.FanoutConfig.Subscriptions {
 			// TODO: use better way to get the provided Name/Namespce for the Subscription
 			// we NEED this for better consumer groups
+
+			d.logger.Info(fmt.Sprintf("XXX About to create newSubscription for %v in %v", subSpec.DeprecatedRef.Name,  subSpec.DeprecatedRef.Namespace))
+
 			sub := newSubscription(subSpec, subSpec.DeprecatedRef.Name, subSpec.DeprecatedRef.Namespace)
 			if _, ok := d.kafkaConsumerGroups[channelRef][sub]; !ok {
+
+				d.logger.Info(fmt.Sprintf("XXX !ok sub: %v, will call subscribe", sub))
+
 				// only subscribe when not exists in channel-subscriptions map
 				// do not need to resubscribe every time channel fanout config is updated
 				if err := d.subscribe(channelRef, sub); err != nil {
+
+					d.logger.Info(fmt.Sprintf("XXX subscribe error: %v", err))
+
 					failedToSubscribe[subSpec] = err
 				}
 			}
@@ -233,9 +242,11 @@ func (d *KafkaDispatcher) subscribe(channelRef eventingchannels.ChannelReference
 func (d *KafkaDispatcher) unsubscribe(channel eventingchannels.ChannelReference, sub subscription) error {
 	d.logger.Info("Unsubscribing from channel", zap.Any("channel", channel), zap.Any("subscription", sub))
 	if consumer, ok := d.kafkaConsumerGroups[channel][sub]; ok {
+		d.logger.Info("XXX Deleting consumer group")
 		delete(d.kafkaConsumerGroups[channel], sub)
 		return consumer.Close()
 	}
+	d.logger.Info(fmt.Sprintf("XXX error getting sub from kafkaConsumerGroups[channel][sub]"))
 	return nil
 }
 func (d *KafkaDispatcher) getConfig() *multichannelfanout.Config {

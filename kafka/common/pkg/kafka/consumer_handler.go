@@ -42,6 +42,7 @@ type saramaConsumerHandler struct {
 }
 
 func NewConsumerHandler(logger *zap.Logger, handler KafkaConsumerHandler) saramaConsumerHandler {
+	logger.Info("XXX NewConsumerHandler called")
 	return saramaConsumerHandler{
 		logger:  logger,
 		handler: handler,
@@ -51,11 +52,13 @@ func NewConsumerHandler(logger *zap.Logger, handler KafkaConsumerHandler) sarama
 
 // Setup is run at the beginning of a new session, before ConsumeClaim
 func (consumer *saramaConsumerHandler) Setup(sarama.ConsumerGroupSession) error {
+	consumer.logger.Info("XXX Setup called")
 	return nil
 }
 
 // Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
 func (consumer *saramaConsumerHandler) Cleanup(session sarama.ConsumerGroupSession) error {
+	consumer.logger.Info("XXX Cleanup called")
 	close(consumer.errors)
 	return nil
 }
@@ -70,18 +73,19 @@ func (consumer *saramaConsumerHandler) ConsumeClaim(session sarama.ConsumerGroup
 	// https://github.com/Shopify/sarama/blob/master/consumer_group.go#L27-L29
 	for message := range claim.Messages() {
 		if ce := consumer.logger.Check(zap.DebugLevel, "debugging"); ce != nil {
-			consumer.logger.Debug("Message claimed", zap.String("topic", message.Topic), zap.Binary("value", message.Value))
+			consumer.logger.Info("Message claimed", zap.String("topic", message.Topic), zap.Binary("value", message.Value))
 		}
 
 		mustMark, err := consumer.handler.Handle(session.Context(), message)
 
 		if err != nil {
+			consumer.logger.Info(fmt.Sprintf("XXX consumer.handler.Handle error: %v", err))
 			consumer.errors <- err
 		}
 		if mustMark {
 			session.MarkMessage(message, "") // Mark kafka message as processed
 			if ce := consumer.logger.Check(zap.DebugLevel, "debugging"); ce != nil {
-				consumer.logger.Debug("Message marked", zap.String("topic", message.Topic), zap.Binary("value", message.Value))
+				consumer.logger.Info("Message marked", zap.String("topic", message.Topic), zap.Binary("value", message.Value))
 			}
 		}
 

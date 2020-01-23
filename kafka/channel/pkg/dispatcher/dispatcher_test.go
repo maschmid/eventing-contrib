@@ -19,6 +19,7 @@ package dispatcher
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -83,10 +84,12 @@ func (d *KafkaDispatcher) checkConfigAndUpdate(config *multichannelfanout.Config
 	}
 
 	if _, err := d.UpdateKafkaConsumers(config); err != nil {
+		d.logger.Info(fmt.Sprintf("XXX UpdateKafkaConsumers error: %v", err))
 		// failed to update dispatchers consumers
 		return err
 	}
 	if err := d.UpdateHostToChannelMap(config); err != nil {
+		d.logger.Info(fmt.Sprintf("XXX UpdateHostToChannelMap error: %v", err))
 		return err
 	}
 

@@ -17,6 +17,7 @@ package kafka
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/Shopify/sarama"
@@ -68,9 +69,11 @@ func (c customConsumerGroup) Errors() <-chan error {
 var _ sarama.ConsumerGroup = (*customConsumerGroup)(nil)
 
 func (c kafkaConsumerGroupFactoryImpl) StartConsumerGroup(groupID string, topics []string, logger *zap.Logger, handler KafkaConsumerHandler) (sarama.ConsumerGroup, error) {
+	logger.Info("XXX StartConsumerGroup called")
 	consumerGroup, err := newConsumerGroupFromClient(groupID, c.client)
 
 	if err != nil {
+		logger.Info(fmt.Sprintf("XXX StartConsumerGroup error: %v", err))
 		return nil, err
 	}
 
@@ -78,7 +81,8 @@ func (c kafkaConsumerGroupFactoryImpl) StartConsumerGroup(groupID string, topics
 
 	go func() {
 		// If any error, they are reported in error channel, so we can skip this message
-		_ = consumerGroup.Consume(context.TODO(), topics, &consumerHandler)
+		err = consumerGroup.Consume(context.TODO(), topics, &consumerHandler)
+		logger.Error(fmt.Sprintf("XXX consumerGroup.Consume error: %v", err))
 	}()
 
 	return customConsumerGroup{consumerHandler.errors, consumerGroup}, err
